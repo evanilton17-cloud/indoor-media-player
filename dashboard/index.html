@@ -1,0 +1,1599 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IndoorMedia — Painel de Controle</title>
+<script src="https://unpkg.com/chart.js"></script>
+<style>
+:root{
+  --bg:#0b1220;
+  --card:#16233a;
+  --card2:#1b2c47;
+  --card3:#203354;
+  --border:#243a5a;
+  --border2:#314a70;
+  --primary:#38bdf8;
+  --primary-dim:#0ea5e9;
+  --primary-soft:rgba(56,189,248,.12);
+  --success:#4ade80;
+  --success-soft:rgba(74,222,128,.12);
+  --error:#f87171;
+  --error-soft:rgba(248,113,113,.12);
+  --warn:#fbbf24;
+  --warn-soft:rgba(251,191,36,.12);
+  --text:#e2e8f0;
+  --muted:#94a8c6;
+  --muted2:#64748b;
+  --radius:14px;
+  --radius-sm:9px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Segoe UI','Inter',system-ui,-apple-system,Roboto,sans-serif;
+  font-size:14px;
+  line-height:1.5;
+  overflow-x:hidden;
+}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:#223453;border-radius:8px}
+::-webkit-scrollbar-track{background:transparent}
+button{font-family:inherit;cursor:pointer}
+input,select,textarea{font-family:inherit;color:var(--text)}
+a{color:var(--primary);text-decoration:none}
+
+/* ---------- Layout ---------- */
+.layout{display:flex;min-height:100vh}
+.sidebar{
+  width:236px;flex-shrink:0;background:#0d1626;border-right:1px solid var(--border);
+  display:flex;flex-direction:column;position:sticky;top:0;height:100vh;
+}
+.brand{display:flex;align-items:center;gap:10px;padding:20px 18px;border-bottom:1px solid var(--border)}
+.brand-logo{
+  width:38px;height:38px;border-radius:10px;flex-shrink:0;
+  background:linear-gradient(135deg,#38bdf8,#6366f1);display:flex;align-items:center;justify-content:center;font-size:19px;
+}
+.brand-name{font-weight:700;font-size:16px;letter-spacing:.3px}
+.brand-sub{font-size:11px;color:var(--muted2);margin-top:-2px}
+.nav{flex:1;padding:14px 10px;overflow-y:auto}
+.nav-label{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted2);padding:8px 10px 6px}
+.nav-item{
+  display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:10px;cursor:pointer;
+  color:var(--muted);font-weight:500;transition:all .15s;margin-bottom:2px;user-select:none;border:1px solid transparent;
+}
+.nav-item:hover{background:var(--card);color:var(--text)}
+.nav-item.active{background:var(--primary-soft);color:var(--primary);border-color:rgba(56,189,248,.25)}
+.nav-item .ico{width:20px;text-align:center;font-size:16px}
+.nav-item .cnt{margin-left:auto;background:var(--card3);border-radius:20px;padding:1px 8px;font-size:11px;color:var(--muted)}
+.sidebar-foot{padding:14px;border-top:1px solid var(--border)}
+.plan-box{background:linear-gradient(135deg,rgba(56,189,248,.12),rgba(99,102,241,.12));border:1px solid var(--border2);border-radius:12px;padding:12px}
+.plan-box .p-title{font-size:11px;color:var(--muted2);text-transform:uppercase;letter-spacing:1px}
+.plan-box .p-name{font-weight:700;font-size:15px;color:var(--primary);margin-top:2px}
+.plan-box .p-screens{font-size:12px;color:var(--muted);margin:3px 0 10px}
+.plan-bar{height:6px;background:var(--card3);border-radius:4px;overflow:hidden;margin-bottom:10px}
+.plan-bar>i{display:block;height:100%;background:linear-gradient(90deg,#38bdf8,#6366f1);border-radius:4px;transition:width .4s}
+.plan-btn{width:100%;background:rgba(56,189,248,.15);color:var(--primary);border:1px solid rgba(56,189,248,.35);padding:8px;border-radius:9px;font-weight:600;font-size:12.5px}
+.plan-btn:hover{background:rgba(56,189,248,.28)}
+.user-box{display:flex;align-items:center;gap:10px;padding:12px 14px;border-top:1px solid var(--border)}
+.avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#38bdf8,#8b5cf6);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0}
+.avatar small{font-size:10px;font-weight:400;opacity:.85}
+.user-info{flex:1;min-width:0}
+.user-info .u-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.user-info .u-email{font-size:11px;color:var(--muted2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.logout-btn{background:none;border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:6px 9px;font-size:14px}
+.logout-btn:hover{color:var(--error);border-color:var(--error)}
+
+.main{flex:1;min-width:0;display:flex;flex-direction:column;height:100vh;overflow-y:auto}
+.topbar{
+  display:flex;align-items:center;gap:14px;justify-content:space-between;
+  padding:16px 26px;background:rgba(11,18,32,.7);backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--border);position:sticky;top:0;z-index:20;
+}
+.topbar .t-title{font-size:20px;font-weight:700}
+.topbar .t-sub{font-size:12.5px;color:var(--muted2);margin-top:1px}
+.topbar-actions{display:flex;align-items:center;gap:10px}
+.conn-pill{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted);background:var(--card);border:1px solid var(--border);padding:6px 12px;border-radius:20px}
+.conn-pill .dot{width:8px;height:8px;border-radius:50%;background:var(--success);box-shadow:0 0 8px var(--success);animation:pulse 2s infinite}
+.conn-pill.off .dot{background:var(--error);box-shadow:0 0 8px var(--error);animation:none}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.view-wrap{padding:24px 26px 40px;flex:1}
+
+/* ---------- Cards / metrics ---------- */
+.grid{display:grid;gap:16px}
+.grid.c2{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.grid.c3{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.grid.c4{grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}
+.card{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  padding:18px;margin-bottom:16px;
+}
+.card.flat{box-shadow:0 4px 20px rgba(0,0,0,.25)}
+.m-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px;position:relative;overflow:hidden}
+.m-card .m-ico{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:21px;margin-bottom:12px}
+.m-card .m-val{font-size:27px;font-weight:700;letter-spacing:-.5px}
+.m-card .m-lab{font-size:12.5px;color:var(--muted);margin-top:2px}
+.m-card .m-tag{position:absolute;top:16px;right:16px;font-size:11px;font-weight:600;border-radius:20px;padding:3px 10px}
+.ico-blue{background:rgba(56,189,248,.13)}
+.ico-green{background:rgba(74,222,128,.13)}
+.ico-purple{background:rgba(167,139,250,.13)}
+.ico-orange{background:rgba(251,191,36,.13)}
+.tag-blue{background:var(--primary-soft);color:var(--primary)}
+.tag-green{background:var(--success-soft);color:var(--success)}
+.tag-red{background:var(--error-soft);color:var(--error)}
+.tag-purple{background:rgba(167,139,250,.15);color:#a78bfa}
+.tag-orange{background:var(--warn-soft);color:var(--warn)}
+.tag-muted{background:rgba(148,168,198,.12);color:var(--muted)}
+
+.card-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}
+.card-head h3{font-size:15.5px;font-weight:600}
+.card-head .right{display:flex;gap:8px;align-items:center}
+
+/* ---------- Buttons ---------- */
+.btn{
+  display:inline-flex;align-items:center;gap:7px;background:var(--primary);color:#062033;
+  border:none;border-radius:10px;padding:9px 16px;font-size:13.5px;font-weight:700;transition:all .15s;
+}
+.btn:hover{background:#7dd3fc;transform:translateY(-1px)}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn.ghost{background:var(--card3);color:var(--text);border:1px solid var(--border2)}
+.btn.ghost:hover{background:var(--border2)}
+.btn.danger{background:rgba(248,113,113,.15);color:var(--error);border:1px solid rgba(248,113,113,.3)}
+.btn.danger:hover{background:rgba(248,113,113,.28);color:#fca5a5}
+.btn.success{background:rgba(74,222,128,.15);color:var(--success);border:1px solid rgba(74,222,128,.3)}
+.btn.success:hover{background:rgba(74,222,128,.28)}
+.btn.sm{padding:5px 10px;font-size:12.5px;border-radius:8px}
+.btn.xs{padding:4px 8px;font-size:12px;border-radius:7px}
+.btn.ico-btn{padding:7px;font-size:14px;line-height:1;border-radius:8px}
+.btn.block{width:100%;justify-content:center}
+
+/* ---------- Forms ---------- */
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:13px}
+.field label{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.field label .req{color:var(--error)}
+.input,.select,.textarea{
+  background:var(--card2);border:1px solid var(--border2);border-radius:9px;padding:10px 12px;font-size:14px;width:100%;outline:none;transition:border .15s;
+}
+.input:focus,.select:focus,.textarea:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(56,189,248,.15)}
+.input::placeholder{color:var(--muted2)}
+textarea.textarea{resize:vertical;min-height:70px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-row2{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:end}
+.chip-group{display:flex;flex-wrap:wrap;gap:8px}
+.chip{
+  display:inline-flex;align-items:center;gap:6px;background:var(--card2);border:1px solid var(--border2);
+  border-radius:20px;padding:7px 13px;font-size:13px;cursor:pointer;user-select:none;transition:all .15s;color:var(--muted);
+}
+.chip:hover{border-color:var(--primary)}
+.chip.active{background:var(--primary-soft);border-color:var(--primary);color:var(--primary);font-weight:600}
+.range{width:100%;accent-color:var(--primary);cursor:pointer}
+
+/* ---------- Devices ---------- */
+.dev-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+.dev-card{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:all .18s;
+}
+.dev-card:hover{border-color:var(--border2);transform:translateY(-2px)}
+.dev-card.expanded{border-color:var(--primary);box-shadow:0 0 0 1px rgba(56,189,248,.4),0 10px 30px rgba(0,0,0,.3)}
+.dev-head{padding:15px 16px;cursor:pointer;display:flex;align-items:flex-start;gap:12px}
+.dev-state{flex-shrink:0}
+.status-dot{width:12px;height:12px;border-radius:50%;margin-top:4px;box-shadow:0 0 0 4px rgba(0,0,0,.2)}
+.status-dot.on{background:var(--success);box-shadow:0 0 0 4px rgba(74,222,128,.15),0 0 12px rgba(74,222,128,.6);animation:pulse 2s infinite}
+.status-dot.off{background:var(--error);box-shadow:0 0 0 4px rgba(248,113,113,.15)}
+.dev-main{flex:1;min-width:0}
+.dev-name{font-weight:600;font-size:15px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.dev-loc{font-size:12px;color:var(--muted2);margin-top:2px}
+.dev-meta{display:flex;gap:10px;margin-top:7px;flex-wrap:wrap}
+.dev-meta span{font-size:11.5px;color:var(--muted);background:var(--card2);border-radius:7px;padding:2px 8px;display:inline-flex;gap:5px;align-items:center}
+.dev-chev{color:var(--muted2);font-size:13px;margin-top:4px;transition:transform .2s}
+.dev-card.expanded .dev-chev{transform:rotate(180deg)}
+.dev-body{display:none;padding:0 16px 16px;border-top:1px solid var(--border)}
+.dev-card.expanded .dev-body{display:block;animation:fadeIn .2s}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+.dev-info-row{display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px dashed var(--border);font-size:12.5px}
+.dev-info-row:last-child{border-bottom:none}
+.dev-info-row .k{color:var(--muted2)}
+.dev-info-row .v{color:var(--text);font-weight:500;text-align:right}
+.vol-row{display:flex;align-items:center;gap:10px;margin-top:6px}
+.vol-row .vol-lab{font-size:12px;color:var(--muted);min-width:52px}
+.vol-row output{font-size:12.5px;color:var(--primary);font-weight:700;min-width:34px;text-align:right}
+.dev-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:13px}
+
+/* ---------- Content upload / list ---------- */
+.dropzone{
+  border:2px dashed var(--border2);border-radius:var(--radius);padding:28px;text-align:center;
+  cursor:pointer;transition:all .18s;background:rgba(27,44,71,.4);
+}
+.dropzone:hover,.dropzone.drag{border-color:var(--primary);background:var(--primary-soft)}
+.dropzone .dz-ico{font-size:34px;margin-bottom:8px}
+.dropzone .dz-t{font-weight:600;font-size:15px}
+.dropzone .dz-s{font-size:12.5px;color:var(--muted);margin-top:3px}
+.upload-list{margin-top:12px;display:flex;flex-direction:column;gap:9px}
+.upload-item{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:11px 13px}
+.upload-item .ui-top{display:flex;justify-content:space-between;gap:10px;font-size:13px}
+.upload-item .ui-top b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.upload-item .ui-pct{font-weight:700;font-size:12.5px;flex-shrink:0}
+.progress{height:6px;background:var(--card3);border-radius:4px;margin-top:8px;overflow:hidden}
+.progress>i{display:block;height:100%;background:linear-gradient(90deg,#38bdf8,#6366f1);border-radius:4px;transition:width .2s}
+.progress.ok>i{background:linear-gradient(90deg,#4ade80,#22c55e)}
+.progress.err>i{background:var(--error)}
+
+.list{display:flex;flex-direction:column;gap:9px}
+.row-item{
+  background:var(--card2);border:1px solid var(--border);border-radius:11px;padding:12px 14px;
+  display:flex;align-items:center;gap:14px;transition:border .15s;
+}
+.row-item:hover{border-color:var(--border2)}
+.row-item .ri-main{flex:1;min-width:0}
+.row-item .ri-title{font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row-item .ri-sub{font-size:12px;color:var(--muted2);margin-top:2px;display:flex;gap:10px;flex-wrap:wrap}
+.type-badge{font-size:10.5px;font-weight:700;letter-spacing:.5px;padding:3px 9px;border-radius:20px}
+.tb-video{background:rgba(56,189,248,.15);color:var(--primary)}
+.tb-image{background:var(--success-soft);color:var(--success)}
+.tb-audio{background:rgba(251,191,36,.15);color:var(--warn)}
+.row-actions{display:flex;gap:6px;flex-shrink:0}
+.empty{
+  text-align:center;padding:34px 20px;color:var(--muted2);
+}
+.empty .e-ico{font-size:40px;margin-bottom:10px;opacity:.6}
+.empty .e-t{font-weight:600;color:var(--muted);font-size:14.5px}
+.empty .e-s{font-size:12.5px;margin-top:3px}
+
+/* ---------- Playlists ---------- */
+.playlist-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:14px}
+.playlist-head{display:flex;align-items:center;gap:12px}
+.playlist-head .pl-num{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#38bdf8,#6366f1);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;flex-shrink:0;color:#062033}
+.pl-title{flex:1;min-width:0}
+.pl-title .n{font-weight:700;font-size:15px}
+.pl-title .d{font-size:12px;color:var(--muted2)}
+.pl-items{margin-top:12px;border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.pl-item{background:var(--card2);padding:9px 14px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border);font-size:13px}
+.pl-item:last-child{border-bottom:none}
+.pl-item .ord{color:var(--muted2);font-size:11px;font-weight:700;width:16px;flex-shrink:0}
+.pl-item .nm{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pl-item .dur{color:var(--muted);font-size:12px;flex-shrink:0}
+
+/* ---------- Schedules ---------- */
+.sched-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:14px}
+.sched-head{display:flex;align-items:center;gap:12px}
+.sched-ico{width:42px;height:42px;border-radius:12px;background:rgba(251,191,36,.12);display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}
+.sched-main{flex:1;min-width:0}
+.sched-main .n{font-weight:700;font-size:15px}
+.sched-main .info{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.sched-main .info span{font-size:11.5px;background:var(--card2);border:1px solid var(--border);border-radius:7px;padding:3px 8px;color:var(--muted)}
+.switch{position:relative;width:44px;height:24px;flex-shrink:0}
+.switch input{opacity:0;width:0;height:0}
+.switch .sl{position:absolute;inset:0;background:var(--card3);border-radius:20px;cursor:pointer;transition:.2s;border:1px solid var(--border2)}
+.switch .sl:before{content:'';position:absolute;width:18px;height:18px;left:2px;top:2px;background:var(--muted);border-radius:50%;transition:.2s}
+.switch input:checked+.sl{background:var(--primary-soft);border-color:var(--primary)}
+.switch input:checked+.sl:before{transform:translateX(20px);background:var(--primary)}
+
+/* ---------- Tables / reports ---------- */
+.table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:11px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:var(--muted2);background:var(--card2);padding:11px 14px;border-bottom:1px solid var(--border);white-space:nowrap}
+tbody td{padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:middle;white-space:nowrap}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:rgba(27,44,71,.5)}
+.mini-bar{height:6px;border-radius:4px;background:var(--card3);overflow:hidden;min-width:90px}
+.mini-bar>i{display:block;height:100%;background:linear-gradient(90deg,#38bdf8,#6366f1)}
+.count-tag{font-weight:700;color:var(--primary)}
+
+/* ---------- Modals ---------- */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(4,8,16,.72);backdrop-filter:blur(4px);
+  display:none;align-items:center;justify-content:center;z-index:100;padding:18px;
+}
+.modal-overlay.open{display:flex}
+.modal{
+  background:var(--card);border:1px solid var(--border2);border-radius:16px;max-width:560px;width:100%;
+  max-height:92vh;overflow-y:auto;box-shadow:0 24px 70px rgba(0,0,0,.55);animation:popIn .2s;
+}
+.modal.wide{max-width:680px}
+@keyframes popIn{from{opacity:0;transform:scale(.96) translateY(8px)}to{opacity:1;transform:none}}
+.modal-head{display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid var(--border)}
+.modal-head h3{font-size:16.5px;font-weight:700}
+.modal-x{background:var(--card3);border:none;color:var(--muted);width:30px;height:30px;border-radius:8px;font-size:15px}
+.modal-x:hover{color:var(--error);background:var(--error-soft)}
+.modal-body{padding:20px}
+.modal-foot{padding:14px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px}
+
+/* ---------- Toasts ---------- */
+.toasts{position:fixed;bottom:22px;right:22px;z-index:200;display:flex;flex-direction:column;gap:10px;max-width:340px}
+.toast{
+  background:var(--card2);border:1px solid var(--border2);border-left:4px solid var(--primary);
+  border-radius:10px;padding:13px 15px;font-size:13.5px;box-shadow:0 10px 30px rgba(0,0,0,.4);
+  display:flex;gap:10px;align-items:flex-start;animation:slideIn .25s;color:var(--text);
+}
+.toast.ok{border-left-color:var(--success)}
+.toast.err{border-left-color:var(--error)}
+.toast.warn{border-left-color:var(--warn)}
+.toast .t-ico{flex-shrink:0;font-size:15px}
+@keyframes slideIn{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:none}}
+.toast.out{opacity:0;transform:translateX(30px);transition:.3s}
+
+/* ---------- Auth screen ---------- */
+.auth-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;position:relative;overflow:hidden;
+  background:radial-gradient(1000px 500px at 20% -10%,rgba(56,189,248,.12),transparent 60%),radial-gradient(800px 400px at 90% 110%,rgba(99,102,241,.12),transparent 60%),var(--bg);
+}
+.auth-glow{position:absolute;border-radius:50%;filter:blur(90px);opacity:.25;pointer-events:none}
+.auth-glow.a1{width:340px;height:340px;background:#38bdf8;top:-80px;right:10%}
+.auth-glow.a2{width:300px;height:300px;background:#6366f1;bottom:-60px;left:8%}
+.auth-card{width:100%;max-width:420px;background:rgba(22,35,58,.75);border:1px solid var(--border2);border-radius:18px;backdrop-filter:blur(10px);padding:32px;box-shadow:0 30px 80px rgba(0,0,0,.5);position:relative;z-index:2}
+.auth-brand{display:flex;align-items:center;gap:12px;margin-bottom:22px}
+.auth-brand .brand-logo{width:46px;height:46px;font-size:23px}
+.auth-brand .b-name{font-weight:800;font-size:19px}
+.auth-brand .b-sub{font-size:12px;color:var(--muted)}
+.tabs{display:flex;background:var(--card2);border:1px solid var(--border);border-radius:11px;padding:4px;margin-bottom:20px}
+.tab{flex:1;text-align:center;padding:9px;border:none;background:none;color:var(--muted);font-weight:600;font-size:13.5px;border-radius:8px;transition:.15s}
+.tab.active{background:var(--primary);color:#062033}
+.auth-sub{font-size:12.5px;color:var(--muted2);text-align:center;margin-top:14px}
+.auth-sub a:hover{text-decoration:underline}
+.error-box{background:var(--error-soft);border:1px solid rgba(248,113,113,.3);color:var(--error);border-radius:9px;padding:10px 13px;font-size:12.5px;margin-bottom:14px;display:none}
+.error-box.show{display:block}
+
+.pair-code{
+  text-align:center;font-size:30px;letter-spacing:12px;font-weight:800;text-transform:uppercase;
+}
+
+@media(max-width:960px){
+  .layout{flex-direction:column}
+  .sidebar{width:100%;height:auto;position:static;flex-direction:row;align-items:center;overflow-x:auto;border-right:none;border-bottom:1px solid var(--border);padding:8px 12px}
+  .brand{border:none;padding:6px 10px}
+  .brand-logo{width:32px;height:32px;font-size:16px}
+  .nav{display:flex;gap:2px;padding:4px;overflow-x:auto}
+  .nav-label,.sidebar-foot{display:none}
+  .nav-item{white-space:nowrap;padding:8px 10px}
+  .user-box{padding:6px 8px;border:none}
+  .user-box .user-info,.avatar small{display:none}
+  .main{height:auto}
+  .topbar{position:static;padding:14px 16px}
+  .view-wrap{padding:16px}
+  .form-row{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- ================= AUTH ================= -->
+<div id="authScreen" class="auth-screen">
+  <div class="auth-glow a1"></div>
+  <div class="auth-glow a2"></div>
+  <div class="auth-card">
+    <div class="auth-brand">
+      <div class="brand-logo">📺</div>
+      <div>
+        <div class="b-name">IndoorMedia</div>
+        <div class="b-sub">Plataforma de Digital Signage</div>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" data-tab="login" onclick="switchAuthTab('login')">Entrar</button>
+      <button class="tab" data-tab="register" onclick="switchAuthTab('register')">Criar conta</button>
+    </div>
+
+    <div class="error-box" id="authError"></div>
+
+    <form id="loginForm" onsubmit="doLogin(event)">
+      <div class="field">
+        <label>E-mail</label>
+        <input class="input" type="email" id="loginEmail" placeholder="voce@empresa.com.br" required>
+      </div>
+      <div class="field">
+        <label>Senha</label>
+        <input class="input" type="password" id="loginPass" placeholder="••••••••" required>
+      </div>
+      <button class="btn block" type="submit">Entrar no painel</button>
+    </form>
+
+    <form id="registerForm" onsubmit="doRegister(event)" style="display:none">
+      <div class="field">
+        <label>Nome</label>
+        <input class="input" type="text" id="regName" placeholder="Seu nome ou empresa" required>
+      </div>
+      <div class="field">
+        <label>E-mail</label>
+        <input class="input" type="email" id="regEmail" placeholder="voce@empresa.com.br" required>
+      </div>
+      <div class="field">
+        <label>Senha</label>
+        <input class="input" type="password" id="regPass" placeholder="Mínimo 6 caracteres" minlength="6" required>
+      </div>
+      <button class="btn block" type="submit">Criar conta grátis</button>
+    </form>
+
+    <div class="auth-sub">🎬 💻 📣 &nbsp;Conteúdo ilimitado, plano grátis com 1 tela</div>
+  </div>
+</div>
+
+<!-- ================= APP ================= -->
+<div id="appScreen" class="layout" style="display:none">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-logo">📺</div>
+      <div>
+        <div class="brand-name">IndoorMedia</div>
+        <div class="brand-sub">Digital Signage Cloud</div>
+      </div>
+    </div>
+
+    <nav class="nav">
+      <div class="nav-label">Menu</div>
+      <div class="nav-item active" data-view="dashboard" onclick="go('dashboard')"><span class="ico">📊</span>Visão Geral</div>
+      <div class="nav-item" data-view="devices" onclick="go('devices')"><span class="ico">🖥️</span>Dispositivos<span class="cnt" id="navDevices">0</span></div>
+      <div class="nav-item" data-view="contents" onclick="go('contents')"><span class="ico">🎬</span>Conteúdo<span class="cnt" id="navContents">0</span></div>
+      <div class="nav-item" data-view="playlists" onclick="go('playlists')"><span class="ico">📋</span>Playlists<span class="cnt" id="navPlaylists">0</span></div>
+      <div class="nav-item" data-view="schedules" onclick="go('schedules')"><span class="ico">⏰</span>Agendamentos<span class="cnt" id="navSchedules">0</span></div>
+      <div class="nav-item" data-view="reports" onclick="go('reports')"><span class="ico">📈</span>Relatórios</div>
+    </nav>
+
+    <div class="sidebar-foot">
+      <div class="plan-box">
+        <div class="p-title">Plano atual</div>
+        <div class="p-name" id="planName">free</div>
+        <div class="p-screens" id="planScreens">0 de 1 telas</div>
+        <div class="plan-bar"><i id="planBar" style="width:0%"></i></div>
+        <button class="plan-btn" onclick="openPlansModal()">⭐ Fazer upgrade</button>
+      </div>
+    </div>
+
+    <div class="user-box">
+      <div class="avatar"><span id="userInitials">?</span></div>
+      <div class="user-info">
+        <div class="u-name" id="userName">—</div>
+        <div class="u-email" id="userEmail">—</div>
+      </div>
+      <button class="logout-btn" title="Sair" onclick="logout()">⏻</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="t-title" id="topTitle">Visão Geral</div>
+        <div class="t-sub" id="topSub"></div>
+      </div>
+      <div class="topbar-actions">
+        <div class="conn-pill" id="connPill"><span class="dot"></span><span id="connText">API</span></div>
+      </div>
+    </div>
+
+    <div class="view-wrap">
+
+      <!-- Dashboard -->
+      <section id="view-dashboard" class="view">
+        <div class="grid c4" style="margin-bottom:16px">
+          <div class="m-card">
+            <div class="m-ico ico-blue">🖥️</div>
+            <div class="m-val" id="mDevices">0</div>
+            <div class="m-lab">Dispositivos</div>
+            <span class="m-tag tag-blue" id="mDevicesTag">—</span>
+          </div>
+          <div class="m-card">
+            <div class="m-ico ico-green">📶</div>
+            <div class="m-val" id="mOnline">0</div>
+            <div class="m-lab">Online agora</div>
+            <span class="m-tag tag-green" id="mOnlinePct">0%</span>
+          </div>
+          <div class="m-card">
+            <div class="m-ico ico-purple">🎬</div>
+            <div class="m-val" id="mContents">0</div>
+            <div class="m-lab">Arquivos de conteúdo</div>
+            <span class="m-tag tag-purple" id="mContentsBytes">0</span>
+          </div>
+          <div class="m-card">
+            <div class="m-ico ico-orange">▶️</div>
+            <div class="m-val" id="mPlays">0</div>
+            <div class="m-lab">Reproduções hoje</div>
+            <span class="m-tag tag-orange" id="mPlaysHours">0 min</span>
+          </div>
+        </div>
+
+        <div class="card flat">
+          <div class="card-head">
+            <h3>📈 Reproduções — últimas 24 horas</h3>
+            <div class="right">
+              <button class="btn ghost sm" onclick="loadDashboardChart()">↻ Atualizar</button>
+            </div>
+          </div>
+          <div style="height:300px;position:relative">
+            <canvas id="playsChart"></canvas>
+          </div>
+        </div>
+
+        <div class="grid c2">
+          <div class="card flat">
+            <div class="card-head"><h3>🖥️ Dispositivos</h3><a href="javascript:go('devices')" style="font-size:12.5px">ver todos →</a></div>
+            <div id="dashDevices"></div>
+          </div>
+          <div class="card flat">
+            <div class="card-head"><h3>⏰ Próximos agendamentos</h3><a href="javascript:go('schedules')" style="font-size:12.5px">gerenciar →</a></div>
+            <div id="dashSchedules"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Devices -->
+      <section id="view-devices" class="view" style="display:none">
+        <div class="card-head" style="margin-bottom:14px">
+          <h3>🖥️ Dispositivos pareados <span style="color:var(--muted2);font-weight:400;font-size:13px">— status atualizado em tempo real</span></h3>
+          <div class="right">
+            <button class="btn" onclick="openPairModal()">➕ Parear TV / Player</button>
+          </div>
+        </div>
+        <div id="devicesContainer"></div>
+      </section>
+
+      <!-- Contents -->
+      <section id="view-contents" class="view" style="display:none">
+        <div class="card flat">
+          <div class="card-head"><h3>📤 Enviar conteúdo</h3></div>
+          <div class="dropzone" id="dropzone" onclick="document.getElementById('fileInput').click()">
+            <div class="dz-ico">📁</div>
+            <div class="dz-t">Arraste arquivos aqui ou clique para selecionar</div>
+            <div class="dz-s">Vídeos (MP4, MKV, WebM), Imagens (JPG, PNG, GIF, WebP) e Áudio (MP3, WAV, AAC)</div>
+          </div>
+          <input type="file" id="fileInput" multiple hidden
+                 accept=".mp4,.mkv,.webm,.mov,.avi,.jpg,.jpeg,.png,.gif,.webp,.bmp,.mp3,.wav,.aac,.ogg,.m4a,.flac">
+          <div class="upload-list" id="uploadList"></div>
+        </div>
+
+        <div class="card-head" style="margin-bottom:4px">
+          <h3>🎬 Biblioteca de conteúdo</h3>
+        </div>
+        <div id="contentsContainer"></div>
+      </section>
+
+      <!-- Playlists -->
+      <section id="view-playlists" class="view" style="display:none">
+        <div class="card-head" style="margin-bottom:14px">
+          <h3>📋 Playlists de exibição</h3>
+          <div class="right"><button class="btn" onclick="openPlaylistEditor(null)">➕ Nova playlist</button></div>
+        </div>
+        <div id="playlistsContainer"></div>
+      </section>
+
+      <!-- Schedules -->
+      <section id="view-schedules" class="view" style="display:none">
+        <div class="card-head" style="margin-bottom:14px">
+          <h3>⏰ Agendamentos</h3>
+          <div class="right"><button class="btn" onclick="openScheduleModal(null)">➕ Novo agendamento</button></div>
+        </div>
+        <div id="schedulesContainer"></div>
+      </section>
+
+      <!-- Reports -->
+      <section id="view-reports" class="view" style="display:none">
+        <div class="card flat">
+          <div class="card-head"><h3>📈 Relatório de Proof-of-Play</h3></div>
+          <div class="form-row" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))">
+            <div class="field">
+              <label>Dispositivo</label>
+              <select class="select" id="repDevice"><option value="">Todos os dispositivos</option></select>
+            </div>
+            <div class="field">
+              <label>De</label>
+              <input class="input" type="datetime-local" id="repFrom">
+            </div>
+            <div class="field">
+              <label>Até</label>
+              <input class="input" type="datetime-local" id="repTo">
+            </div>
+            <div class="field">
+              <label>&nbsp;</label>
+              <button class="btn" onclick="loadReports()">🔍 Aplicar filtros</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid c2">
+          <div class="card flat">
+            <div class="card-head"><h3>🏆 Reproduções por conteúdo</h3></div>
+            <div id="repSummary"></div>
+          </div>
+          <div class="card flat">
+            <div class="card-head"><h3>✅ Detalhamento das execuções (<span id="repCount">0</span>)</h3></div>
+            <div class="table-wrap" id="repTableWrap">
+              <table>
+                <thead><tr><th>Conteúdo</th><th>Tipo</th><th>Dispositivo</th><th>Início</th><th>Fim</th><th>Duração</th></tr></thead>
+                <tbody id="repTable"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<!-- Modal root -->
+<div class="modal-overlay" id="modalRoot"></div>
+<div class="toasts" id="toastRoot"></div>
+
+<script>
+/* ============================================================
+   IndoorMedia Dashboard — Single File App
+   ============================================================ */
+const API_URL = 'http://localhost:3000';
+
+const state = {
+  token: localStorage.getItem('im_token') || '',
+  user: JSON.parse(localStorage.getItem('im_user') || 'null'),
+  devices: [],
+  contents: [],
+  playlists: [],
+  schedules: [],
+  logs: [],
+  chart: null,
+  pairing: false,
+  editingPlaylist: null,
+  editingPlaylistItems: [],
+  scheduleDraft: null
+};
+
+/* ---------- Helpers ---------- */
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmtBytes = (b) => {
+  if (!b && b !== 0) return '—';
+  const u = ['B','KB','MB','GB','TB']; let i = 0, n = b;
+  while (n >= 1024 && i < u.length-1) { n /= 1024; i++; }
+  return n.toFixed(n >= 10 || i === 0 ? 0 : 1) + ' ' + u[i];
+};
+const fmtDur = (s) => {
+  s = Math.round(+s || 0);
+  if (s <= 0) return '—';
+  const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = s%60;
+  if (h > 0) return h + 'h ' + m + 'min';
+  if (m > 0) return m + 'min ' + sec + 's';
+  return sec + 's';
+};
+const pad = (n) => String(n).padStart(2, '0');
+const fmtDate = (d) => {
+  if (!d) return '—';
+  const dt = new Date(d);
+  if (isNaN(dt)) return '—';
+  return pad(dt.getDate()) + '/' + pad(dt.getMonth()+1) + '/' + dt.getFullYear() + ' ' + pad(dt.getHours()) + ':' + pad(dt.getMinutes());
+};
+const fmtDateShort = (d) => {
+  if (!d) return '—';
+  const dt = new Date(d);
+  if (isNaN(dt)) return '—';
+  return pad(dt.getDate()) + '/' + pad(dt.getMonth()+1) + '/' + dt.getFullYear();
+};
+const fmtRel = (d) => {
+  if (!d) return 'nunca';
+  const diff = Date.now() - new Date(d).getTime();
+  if (diff < 0) return 'agora';
+  const s = Math.floor(diff/1000);
+  if (s < 45) return 'agora';
+  const m = Math.floor(s/60);
+  if (m < 60) return m + ' min atrás';
+  const h = Math.floor(m/60);
+  if (h < 24) return h + ' h atrás';
+  const days = Math.floor(h/24);
+  if (days === 1) return 'ontem';
+  return days + ' dias atrás';
+};
+const typeParams = { VIDEO:{label:'VIDEO', cls:'tb-video'}, IMAGE:{label:'IMAGEM', cls:'tb-image'}, AUDIO:{label:'ÁUDIO', cls:'tb-audio'} };
+const typeBadge = (t) => {
+  const tp = typeParams[t] || {label:t || '—', cls:'tag-muted'};
+  return '<span class="type-badge ' + tp.cls + '">' + tp.label + '</span>';
+};
+const dayNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+const dayIndex = [0,1,2,3,4,5,6];
+
+/* ---------- API ---------- */
+function api(path, opts) {
+  opts = opts || {};
+  const headers = {};
+  if (!opts.form) headers['Content-Type'] = 'application/json';
+  if (state.token) headers['Authorization'] = 'Bearer ' + state.token;
+  const o = { method: opts.method || 'GET', headers };
+  if (opts.body !== undefined) o.body = opts.form ? opts.body : JSON.stringify(opts.body);
+  return fetch(API_URL + path, o).then(async (res) => {
+    let data = null;
+    try { data = await res.json(); } catch (e) {}
+    if (!res.ok) {
+      const msg = (data && data.error) ? data.error : ('Erro ' + res.status);
+      const err = new Error(msg); err.status = res.status; throw err;
+    }
+    return data;
+  });
+}
+
+/* ---------- Toasts / modals ---------- */
+function toast(msg, type) {
+  const icons = { ok:'✅', err:'❌', warn:'⚠️', info:'ℹ️' };
+  const el = document.createElement('div');
+  el.className = 'toast ' + (type || 'info');
+  el.innerHTML = '<span class="t-ico">' + (icons[type] || icons.info) + '</span><div>' + msg + '</div>';
+  $('toastRoot').appendChild(el);
+  setTimeout(() => { el.classList.add('out'); setTimeout(() => el.remove(), 350); }, 4200);
+}
+function openModal(html, wide) {
+  const r = $('modalRoot');
+  r.className = 'modal-overlay open';
+  r.innerHTML = '<div class="modal' + (wide ? ' wide' : '') + '">' + html + '</div>';
+}
+function closeModal() {
+  const r = $('modalRoot');
+  r.className = 'modal-overlay';
+  r.innerHTML = '';
+}
+document.addEventListener('click', (e) => {
+  if (e.target.classList && e.target.classList.contains('modal-overlay') && !e.target.closest('.modal')) closeModal();
+});
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+
+/* ---------- Auth ---------- */
+function switchAuthTab(which) {
+  document.querySelectorAll('.tab').forEach((t) => t.classList.toggle('active', t.dataset.tab === which));
+  $('loginForm').style.display = which === 'login' ? '' : 'none';
+  $('registerForm').style.display = which === 'register' ? '' : 'none';
+  $('authError').classList.remove('show');
+}
+function showAuthError(msg) { const b = $('authError'); b.textContent = msg; b.classList.add('show'); }
+function doLogin(e) {
+  e.preventDefault();
+  showAuthError('');
+  api('/api/auth/login', { method:'POST', body:{ email:$('loginEmail').value.trim(), password:$('loginPass').value } })
+    .then(onAuth).catch((err) => showAuthError('Falha no login: ' + err.message));
+}
+function doRegister(e) {
+  e.preventDefault();
+  showAuthError('');
+  api('/api/auth/register', { method:'POST', body:{ name:$('regName').value.trim(), email:$('regEmail').value.trim(), password:$('regPass').value } })
+    .then(onAuth).catch((err) => showAuthError('Falha ao criar conta: ' + err.message));
+}
+function onAuth(res) {
+  state.token = res.token;
+  state.user = res.user;
+  localStorage.setItem('im_token', res.token);
+  localStorage.setItem('im_user', JSON.stringify(res.user));
+  $('authScreen').style.display = 'none';
+  $('appScreen').style.display = 'flex';
+  renderUser();
+  go('dashboard');
+  atualizarDados();
+  startPolling();
+  updateConn(true);
+  toast('Bem-vindo, ' + res.user.name + '!', 'ok');
+}
+function logout() {
+  localStorage.removeItem('im_token');
+  localStorage.removeItem('im_user');
+  state.token = ''; state.user = null;
+  stopPolling();
+  $('appScreen').style.display = 'none';
+  $('authScreen').style.display = '';
+  switchAuthTab('login');
+  $('loginPass').value = '';
+  updateConn(false);
+}
+function renderUser() {
+  const u = state.user;
+  if (!u) return;
+  $('userName').textContent = u.name;
+  $('userEmail').textContent = u.email;
+  $('userInitials').textContent = (u.name || '?').trim().split(/\s+/).slice(0,2).map((p) => p[0].toUpperCase()).join('');
+  $('planName').textContent = (u.plan || 'free').toUpperCase();
+  const used = state.devices.filter((d) => d.paired).length;
+  $('planScreens').textContent = used + ' de ' + (u.planScreens || 0) + ' telas em uso';
+  $('planBar').style.width = Math.min(100, (used / Math.max(1, u.planScreens || 1)) * 100) + '%';
+  if (used >= (u.planScreens || 1) && !state.warnedLimit) {
+    state.warnedLimit = true;
+    toast('Limite de telas do plano atingido. Faça upgrade para adicionar mais dispositivos.', 'warn');
+  }
+  if (used < (u.planScreens || 1)) state.warnedLimit = false;
+}
+
+/* ---------- Navigation ---------- */
+const viewTitles = {
+  dashboard: ['Visão Geral', 'Métricas e atividade de reprodução'],
+  devices: ['Dispositivos', 'Gerencie suas TVs e players'],
+  contents: ['Conteúdo', 'Biblioteca de mídia para as telas'],
+  playlists: ['Playlists', 'Sequências de exibição'],
+  schedules: ['Agendamentos', 'Programação por dia e horário'],
+  reports: ['Relatórios', 'Prova de exibição (proof-of-play)']
+};
+function go(view) {
+  document.querySelectorAll('.view').forEach((v) => v.style.display = 'none');
+  document.querySelectorAll('.nav-item').forEach((n) => n.classList.toggle('active', n.dataset.view === view));
+  $('view-' + view).style.display = '';
+  const t = viewTitles[view];
+  $('topTitle').textContent = t[0];
+  $('topSub').textContent = t[1];
+  if (view === 'dashboard') renderDashboard();
+  if (view === 'devices') renderDevices();
+  if (view === 'contents') renderContents();
+  if (view === 'playlists') renderPlaylists();
+  if (view === 'schedules') renderSchedules();
+  if (view === 'reports') { fillReportDeviceSelect(); $('repFrom').value = ''; $('repTo').value = ''; loadReports({ auto:true }); }
+}
+
+/* ---------- Data loading ---------- */
+function updateConn(ok) {
+  const p = $('connPill');
+  p.classList.toggle('off', !ok);
+  $('connText').textContent = ok ? 'API: ' + API_URL.replace(/^https?:\/\//, '') : 'API offline';
+}
+async function atualizarDados() {
+  if (!state.token) return;
+  updateConn(true);
+  try {
+    const [dev, cont, pl, sch] = await Promise.all([
+      api('/api/devices'), api('/api/contents'), api('/api/playlists'), api('/api/schedules')
+    ]);
+    state.devices = dev.devices || [];
+    state.contents = cont.contents || [];
+    state.playlists = pl.playlists || [];
+    state.schedules = sch.schedules || [];
+    updateCounters();
+    renderUser();
+    const current = document.querySelector('.nav-item.active') ? document.querySelector('.nav-item.active').dataset.view : '';
+    if (current === 'dashboard') renderDashboard();
+    if (current === 'devices') renderDevices();
+  } catch (e) {
+    updateConn(false);
+    toast('Falha ao carregar dados: ' + e.message, 'err');
+  }
+}
+function updateCounters() {
+  $('navDevices').textContent = state.devices.length;
+  $('navContents').textContent = state.contents.length;
+  $('navPlaylists').textContent = state.playlists.length;
+  $('navSchedules').textContent = state.schedules.length;
+}
+async function loadLogs(params) {
+  const q = new URLSearchParams();
+  if (params.deviceId) q.set('deviceId', params.deviceId);
+  if (params.from) q.set('from', params.from);
+  if (params.to) q.set('to', params.to);
+  const data = await api('/api/schedules/proof-of-play?' + q.toString());
+  return data.logs || [];
+}
+
+/* ---------- Polling ---------- */
+let pollTimer = null;
+function startPolling() {
+  stopPolling();
+  pollTimer = setInterval(async () => {
+    if (!state.token) return;
+    try {
+      const dev = await api('/api/devices');
+      state.devices = dev.devices || [];
+      updateCounters();
+      renderUser();
+      const current = document.querySelector('.nav-item.active') ? document.querySelector('.nav-item.active').dataset.view : '';
+      if (current === 'devices') renderDevices();
+    } catch (e) { updateConn(false); }
+  }, 15000);
+}
+function stopPolling() { if (pollTimer) { clearInterval(pollTimer); pollTimer = null; } }
+
+/* ---------- Dashboard ---------- */
+function renderDashboard() {
+  const devs = state.devices;
+  const now = new Date();
+  const online = devs.filter((d) => d.status && d.status.online).length;
+  $('mDevices').textContent = devs.length;
+  $('mDevicesTag').textContent = devs.length + (devs.length === 1 ? ' tela' : ' ' + 'telas');
+  $('mOnline').textContent = online;
+  $('mOnlinePct').textContent = devs.length ? Math.round(online/devs.length*100) + '%' : '—';
+  $('mContents').textContent = state.contents.length;
+  $('mContentsBytes').textContent = fmtBytes(state.contents.reduce((a, c) => a + (c.sizeBytes || 0), 0));
+
+  const from = new Date(now); from.setHours(0,0,0,0);
+  loadLogs({ from: from.toISOString(), to: now.toISOString() })
+    .then((logs) => {
+      $('mPlays').textContent = logs.length;
+      $('mPlaysHours').textContent = fmtDur(logs.reduce((a, l) => a + (l.durationSeconds || 0), 0));
+    })
+    .catch((e) => { $('mPlays').textContent = '—'; });
+
+  loadDashboardChart();
+  renderDashDevices();
+  renderDashSchedules();
+}
+async function loadDashboardChart() {
+  const now = new Date();
+  const from = new Date(now.getTime() - 24*3600*1000);
+  let logs;
+  try { logs = await loadLogs({ from: from.toISOString(), to: now.toISOString() }); }
+  catch (e) { toast('Falha ao carregar gráfico: ' + e.message, 'err'); return; }
+  const hours = [];
+  for (let i = 0; i < 24; i++) {
+    const h = new Date(from.getTime() + i*3600*1000);
+    hours.push({ label: pad(h.getHours()) + ':00', count: 0 });
+  }
+  logs.forEach((l) => {
+    const t = new Date(l.startedAt).getTime();
+    const idx = Math.floor((t - from.getTime()) / 3600000);
+    if (idx >= 0 && idx < 24) hours[idx].count++;
+  });
+  drawChart(hours.map((h) => h.label), hours.map((h) => h.count));
+}
+function drawChart(labels, data) {
+  if (typeof Chart === 'undefined') { return; }
+  if (state.chart) state.chart.destroy();
+  const ctx = $('playsChart');
+  state.chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Reproduções',
+        data,
+        borderColor: '#38bdf8',
+        backgroundColor: 'rgba(56,189,248,.12)',
+        fill: true,
+        tension: .35,
+        pointRadius: 3,
+        pointBackgroundColor: '#38bdf8',
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { color: 'rgba(36,58,90,.5)' }, ticks: { color: '#94a8c6', maxTicksLimit: 12 } },
+        y: { grid: { color: 'rgba(36,58,90,.5)' }, ticks: { color: '#94a8c6', precision: 0 }, beginAtZero: true }
+      }
+    }
+  });
+}
+function deviceLine(d) {
+  const on = d.status && d.status.online;
+  return '<div class="dev-meta" style="margin-top:0">' +
+    '<span>' + (on ? '🟢 Online' : '🔴 Offline') + '</span>' +
+    '<span>📶 ' + fmtRel(d.status && d.status.lastSeen) + '</span>' +
+    (d.status && d.status.currentContent ? '<span>🎬 ' + esc(d.status.currentContent) + '</span>' : '') +
+  '</div>';
+}
+function renderDashDevices() {
+  const devs = state.devices.slice(0, 5);
+  const container = $('dashDevices');
+  if (!devs.length) {
+    container.innerHTML = '<div class="empty"><div class="e-ico">🖥️</div><div class="e-t">Nenhum dispositivo</div><div class="e-s">Pareie sua primeira TV com o código exibido nela.</div></div>';
+    return;
+  }
+  container.innerHTML = '<div class="list">' + devs.map((d) =>
+    '<div class="row-item" style="cursor:pointer" onclick="go(\'devices\')">' +
+      '<span class="status-dot ' + (d.status && d.status.online ? 'on' : 'off') + '"></span>' +
+      '<div class="ri-main"><div class="ri-title">' + esc(d.name) + '</div>' +
+      '<div class="ri-sub">' + (d.location ? esc(d.location) : 'Sem localização') + ' · ' + fmtRel(d.status && d.status.lastSeen) + '</div></div>' +
+    '</div>'
+  ).join('') + '</div>';
+}
+function renderDashSchedules() {
+  const container = $('dashSchedules');
+  const active = state.schedules.filter((s) => s.active !== false).slice(0, 5);
+  if (!active.length) {
+    container.innerHTML = '<div class="empty"><div class="e-ico">⏰</div><div class="e-t">Sem agendamentos ativos</div><div class="e-s">Crie um agendamento para programar sua playlist.</div></div>';
+    return;
+  }
+  container.innerHTML = '<div class="list">' + active.map((s) => {
+    const pl = state.playlists.find((p) => p._id === s.playlistId) || {};
+    const range = (s.rules && s.rules.daysOfWeek && s.rules.daysOfWeek.length)
+      ? s.rules.daysOfWeek.map((d) => dayNames[d]).join(', ') : 'Todos os dias';
+    return '<div class="row-item" style="cursor:pointer" onclick="go(\'schedules\')">' +
+      '<div class="ri-main"><div class="ri-title">' + esc(s.name) + '</div>' +
+      '<div class="ri-sub"><span>' + esc(pl.name || 'Playlist removida') + '</span><span>' + range + '</span>' +
+      '<span>' + (s.rules.startTime || '00:00') + ' → ' + (s.rules.endTime || '23:59') + '</span>' +
+      '<span>prio. ' + (s.priority || 1) + '</span></div></div>' +
+    '</div>';
+  }).join('') + '</div>';
+}
+
+/* ---------- Devices view ---------- */
+function renderDevices() {
+  const container = $('devicesContainer');
+  const devs = state.devices;
+  if (!devs.length) {
+    container.innerHTML =
+      '<div class="card flat"><div class="empty"><div class="e-ico">📺</div>' +
+      '<div class="e-t">Nenhuma TV pareada ainda</div>' +
+      '<div class="e-s">Abra o app IndoorMedia na TV / Android Box e toque em "Parear". O aparelho vai exibir um código PIN de 6 dígitos.</div><br>' +
+      '<button class="btn" onclick="openPairModal()">➕ Parear agora</button></div></div>';
+    return;
+  }
+  container.innerHTML = '<div class="dev-grid">' + devs.map(devCard).join('') + '</div>';
+}
+function devCard(d) {
+  const on = d.status && d.status.online;
+  const st = d.status || {};
+  const vol = st.volume !== undefined ? st.volume : 100;
+  const uid = esc(d.uniqueId || '—');
+  return '<div class="dev-card" id="devcard-' + d._id + '">' +
+    '<div class="dev-head" onclick="toggleDevice(\'' + d._id + '\')">' +
+      '<div class="dev-state"><span class="status-dot ' + (on ? 'on' : 'off') + '"></span></div>' +
+      '<div class="dev-main">' +
+        '<div class="dev-name">' + esc(d.name) +
+          (on ? ' <span class="type-badge tb-image" style="font-size:9.5px">ONLINE</span>' : ' <span class="type-badge tb-video" style="font-size:9.5px">OFFLINE</span>') +
+        '</div>' +
+        '<div class="dev-loc">📍 ' + esc(d.location || 'Sem localização') + ' · ID: ' + uid + '</div>' +
+        '<div class="dev-meta">' +
+          '<span>🕒 ' + fmtRel(st.lastSeen) + '</span>' +
+          '<span>🔊 ' + vol + '%</span>' +
+          (st.currentContent ? '<span>🎬 ' + esc(st.currentContent) + '</span>' : '') +
+          '<span>📚 ' + (st.itemCount || 0) + ' itens</span>' +
+        '</div>' +
+      '</div>' +
+      '<div class="dev-chev">▼</div>' +
+    '</div>' +
+    '<div class="dev-body">' +
+      '<div class="dev-info-row"><span class="k">Nome</span><span class="v" id="dname-' + d._id + '">' + esc(d.name) + '</span></div>' +
+      '<div class="dev-info-row"><span class="k">Localização</span><span class="v" id="dloc-' + d._id + '">' + esc(d.location || '—') + '</span></div>' +
+      '<div class="dev-info-row"><span class="k">ID único</span><span class="v">' + uid + '</span></div>' +
+      '<div class="dev-info-row"><span class="k">Modelo / app</span><span class="v">' + esc([d.model, d.appVersion].filter(Boolean).join(' · ') || '—') + '</span></div>' +
+      '<div class="dev-info-row"><span class="k">IP</span><span class="v">' + esc(d.ipAddress || '—') + '</span></div>' +
+      '<div class="dev-info-row"><span class="k">Tocando agora</span><span class="v">' + esc(st.currentContent || '—') + '</span></div>' +
+      '<div class="vol-row">' +
+        '<span class="vol-lab">🔊 Volume</span>' +
+        '<input class="range" type="range" min="0" max="100" value="' + vol + '" oninput="document.getElementById(\'devvol-' + d._id + '\').textContent = this.value + \'%\'" onchange="setVolume(\'' + d._id + '\',this.value)">' +
+        '<output id="devvol-' + d._id + '">' + vol + '%</output>' +
+      '</div>' +
+      '<div class="field" style="margin:10px 0 2px"><label>Renomear / localização</label>' +
+        '<div class="form-row">' +
+          '<input class="input" id="newname-' + d._id + '" value="' + esc(d.name) + '" placeholder="Nome da TV">' +
+          '<input class="input" id="newloc-' + d._id + '" value="' + esc(d.location || '') + '" placeholder="Localização (ex: Loja / Recepção)">' +
+        '</div>' +
+        '<div style="margin-top:8px"><button class="btn ghost sm" onclick="saveDeviceInfo(\'' + d._id + '\')">💾 Salvar</button></div>' +
+      '</div>' +
+      '<div class="dev-actions">' +
+        '<button class="btn ghost xs" title="Sincronizar manifesto" onclick="refreshDevice(\'' + d._id + '\', this)">🔄 Sincronizar</button>' +
+        '<button class="btn ghost xs" title="Reproduzir" onclick="sendCommand(\'' + d._id + '\',\'PLAY\')">▶ Play</button>' +
+        '<button class="btn ghost xs" title="Pausar" onclick="sendCommand(\'' + d._id + '\',\'PAUSE\')">⏸ Pause</button>' +
+        '<button class="btn ghost xs" title="Parar" onclick="sendCommand(\'' + d._id + '\',\'STOP\')">⏹ Stop</button>' +
+        '<button class="btn ghost xs" title="Reiniciar player" onclick="sendCommand(\'' + d._id + '\',\'REBOOT\')">🔃 Reboot</button>' +
+        '<button class="btn ghost xs" title="Ligar tela" onclick="sendCommand(\'' + d._id + '\',\'SCREEN_ON\')">📺 Tela ON</button>' +
+        '<button class="btn ghost xs" title="Desligar tela" onclick="sendCommand(\'' + d._id + '\',\'SCREEN_OFF\')">🌙 Tela OFF</button>' +
+        '<button class="btn danger xs" title="Excluir dispositivo" onclick="deleteDevice(\'' + d._id + '\', this)">🗑 Excluir</button>' +
+      '</div>' +
+    '</div>' +
+  '</div>';
+}
+function toggleDevice(id) {
+  document.getElementById('devcard-' + id).classList.toggle('expanded');
+}
+function sendCommand(id, action, value) {
+  api('/api/devices/' + id + '/command', { method:'POST', body:{ action, value } })
+    .then(() => toast('Comando ' + action + ' enviado', 'ok'))
+    .catch((e) => toast('Erro: ' + e.message, 'err'));
+}
+function setVolume(id, v) {
+  const out = document.getElementById('devvol-' + id);
+  if (out) out.textContent = v + '%';
+  api('/api/devices/' + id + '/command', { method:'POST', body:{ action:'VOLUME', value:parseInt(v,10) } })
+    .then(() => {})
+    .catch((e) => toast('Erro de volume: ' + e.message, 'err'));
+}
+function refreshDevice(id, btn) {
+  btn.disabled = true; btn.textContent = '…';
+  api('/api/devices/' + id + '/refresh', { method:'POST' })
+    .then(() => toast('Manifesto sincronizado com sucesso', 'ok'))
+    .catch((e) => toast('Erro: ' + e.message, 'err'))
+    .finally(() => { btn.disabled = false; btn.textContent = '🔄 Sincronizar'; });
+}
+function saveDeviceInfo(id) {
+  const name = $('newname-' + id).value.trim();
+  const location = $('newloc-' + id).value.trim();
+  const body = {};
+  if (name) body.name = name;
+  if (location) body.location = location;
+  api('/api/devices/' + id, { method:'PATCH', body })
+    .then(() => { toast('Dados do dispositivo atualizados', 'ok'); return atualizarDados(); })
+    .catch((e) => toast('Erro: ' + e.message, 'err'));
+}
+function deleteDevice(id, btn) {
+  if (!confirm('Excluir este dispositivo? Ele será desvinculado do seu painel.')) return;
+  btn.disabled = true;
+  api('/api/devices/' + id, { method:'DELETE' })
+    .then(() => { toast('Dispositivo excluído', 'ok'); return atualizarDados(); })
+    .catch((e) => toast('Erro: ' + e.message, 'err'));
+}
+
+/* ---- Pair modal ---- */
+function openPairModal() {
+  const used = state.devices.filter((d) => d.paired).length;
+  const max = (state.user && state.user.planScreens) || 1;
+  if (used >= max) {
+    toast('Você atingiu o limite de ' + max + ' telas do seu plano. Faça upgrade para parear mais TVs.', 'warn');
+    openPlansModal();
+    return;
+  }
+  openModal(
+    '<div class="modal-head"><h3>📺 Parear nova TV / Player</h3><button class="modal-x" onclick="closeModal()">✕</button></div>' +
+    '<div class="modal-body">' +
+      '<div class="field"><label>Digite o código PIN que aparece na TV <span class="req">*</span></label>' +
+        '<input class="input pair-code" id="pairCode" inputmode="numeric" maxlength="6" placeholder="000000">' +
+        '<div style="font-size:11.5px;color:var(--muted2)">Abra o aplicativo IndoorMedia na TV e toque em <b>"Parear"</b> — será exibido um código de 6 dígitos.</div>' +
+      '</div>' +
+      '<div class="field"><label>Nome para o dispositivo</label>' +
+        '<input class="input" id="pairName" placeholder="Ex: TV Recepção">' +
+      '</div>' +
+      '<div class="field"><label>Localização (opcional)</label>' +
+        '<input class="input" id="pairLoc" placeholder="Ex: Loja / Térreo">' +
+      '</div>' +
+      '<button class="btn block" id="pairBtn" onclick="doPair()">➕ Parear dispositivo</button>' +
+    '</div>',
+    false
+  );
+  setTimeout(() => { const p = $('pairCode'); p.focus(); p.oninput = () => p.value = p.value.replace(/[^0-9]/g, ''); }, 60);
+}
+function doPair() {
+  const code = $('pairCode').value.trim();
+  if (code.length !== 6) { toast('Informe o código PIN de 6 dígitos', 'warn'); return; }
+  const btn = $('pairBtn'); btn.disabled = true; btn.textContent = 'Pareando…';
+  api('/api/devices/pair', { method:'POST', body:{ pairingCode:code, name:$('pairName').value.trim() || undefined, location:$('pairLoc').value.trim() || undefined } })
+    .then((res) => {
+      toast('TV pareada com sucesso! 🎉', 'ok');
+      closeModal();
+      return atualizarDados();
+    })
+    .catch((e) => { toast('Não foi possível parear: ' + e.message, 'err'); btn.disabled = false; btn.textContent = '➕ Parear dispositivo'; });
+}
+
+/* ---------- Contents ---------- */
+const dz = $('dropzone');
+['dragenter','dragover'].forEach((ev) => dz.addEventListener(ev, (e) => { e.preventDefault(); dz.classList.add('drag'); }));
+['dragleave','drop'].forEach((ev) => dz.addEventListener(ev, (e) => { e.preventDefault(); dz.classList.remove('drag'); }));
+dz.addEventListener('drop', (e) => { if (e.dataTransfer.files.length) uploadFiles(e.dataTransfer.files); });
+$('fileInput').addEventListener('change', (e) => { if (e.target.files.length) uploadFiles(e.target.files); e.target.value = ''; });
+
+async function uploadFiles(fileList) {
+  const files = Array.from(fileList);
+  const listEl = $('uploadList');
+  const items = [];
+  for (const f of files) {
+    const el = document.createElement('div');
+    el.className = 'upload-item';
+    el.innerHTML = '<div class="ui-top"><b>' + esc(f.name) + '</b><span class="ui-pct">0%</span></div>' +
+      '<div class="progress"><i style="width:0%"></i></div>' +
+      '<div class="ui-sub" style="font-size:11px;color:var(--muted2);margin-top:5px">' + fmtBytes(f.size) + ' · aguardando…</div>';
+    listEl.appendChild(el);
+    items.push({ file: f, el });
+  }
+  for (const it of items) await uploadOne(it);
+  const done = items.filter((i) => i.el.dataset.state === 'ok').length;
+  toast(done + ' de ' + items.length + ' arquivo(s) enviado(s)', done === items.length ? 'ok' : 'warn');
+  atualizarDados();
+  setTimeout(() => { listEl.innerHTML = ''; }, 6000);
+}
+function uploadOne(it) {
+  return new Promise((resolve) => {
+    const { file, el } = it;
+    const bar = el.querySelector('.progress');
+    const pct = el.querySelector('.ui-pct');
+    const sub = el.querySelector('.ui-sub');
+    sub.textContent = 'Enviando…';
+    const xhr = new XMLHttpRequest();
+    const fd = new FormData();
+    fd.append('file', file);
+    xhr.open('POST', API_URL + '/api/contents/import');
+    xhr.setRequestHeader('Authorization', 'Bearer ' + state.token);
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) {
+        const p = Math.round((e.loaded / e.total) * 100);
+        el.dataset.state = 'ok';
+        bar.querySelector('i').style.width = p + '%';
+        pct.textContent = p + '%';
+        sub.textContent = fmtBytes(e.loaded) + ' de ' + fmtBytes(e.total);
+      }
+    };
+    xhr.onload = () => {
+      let data = null; try { data = JSON.parse(xhr.responseText); } catch (e) {}
+      if (xhr.status >= 200 && xhr.status < 300) {
+        bar.classList.add('ok'); bar.querySelector('i').style.width = '100%';
+        pct.textContent = '100%';
+        sub.textContent = '✅ Enviado — ' + (data.content.type || '') + ' · ' + fmtBytes(file.size);
+        el.dataset.state = 'ok';
+      } else {
+        bar.classList.add('err'); pct.textContent = 'erro';
+        sub.textContent = '❌ ' + ((data && data.error) || ('Erro ' + xhr.status));
+        el.dataset.state = 'err';
+      }
+      resolve();
+    };
+    xhr.onerror = () => { bar.classList.add('err'); pct.textContent = 'erro'; sub.textContent = '❌ Falha de conexão com o servidor'; el.dataset.state = 'err'; resolve(); };
+    xhr.send(fd);
+  });
+}
+function renderContents() {
+  const container = $('contentsContainer');
+  const list = state.contents;
+  if (!list.length) {
+    container.innerHTML = '<div class="card flat"><div class="empty"><div class="e-ico">🎬</div><div class="e-t">Nenhum conteúdo na biblioteca</div><div class="e-s">Envie vídeos, imagens ou áudios acima para começar.</div></div></div>';
+    return;
+  }
+  container.innerHTML = '<div class="list">' + list.map((c) =>
+    '<div class="row-item">' +
+      '<div class="ri-main">' +
+        '<div class="ri-title">' + esc(c.name) + '</div>' +
+        '<div class="ri-sub">' + typeBadge(c.type) + '<span>📦 ' + fmtBytes(c.sizeBytes) + '</span><span>⏱ ' + fmtDur(c.durationSeconds) + '</span><span>📅 ' + fmtDate(c.createdAt) + '</span></div>' +
+      '</div>' +
+      '<div class="row-actions">' +
+        '<button class="btn danger xs" onclick="deleteContent(\'' + c._id + '\', this)">🗑 Excluir</button>' +
+      '</div>' +
+    '</div>'
+  ).join('') + '</div>';
+}
+function deleteContent(id, btn) {
+  if (!confirm('Excluir este arquivo de conteúdo?')) return;
+  btn.disabled = true;
+  api('/api/contents/' + id, { method:'DELETE' })
+    .then(() => { toast('Conteúdo excluído', 'ok'); return atualizarDados(); })
+    .catch((e) => toast('Erro: ' + e.message, 'err'));
+}
+
+/* ---------- Playlists ---------- */
+function renderPlaylists() {
+  const container = $('playlistsContainer');
+  const list = state.playlists;
+  if (!list.length) {
+    container.innerHTML = '<div class="card flat"><div class="empty"><div class="e-ico">📋</div><div class="e-t">Nenhuma playlist criada</div><div class="e-s">Crie uma playlist e adicione conteúdos para exibir nas TVs.</div></div></div>';
+    return;
+  }
+  container.innerHTML = list.map((p) => {
+    const totalDur = (p.items || []).reduce((a, i) => a + (i.durationSeconds || 0), 0);
+    return '<div class="playlist-card">' +
+      '<div class="playlist-head">' +
+        '<div class="pl-num">' + (p.items ? p.items.length : 0) + '</div>' +
+        '<div class="pl-title"><div class="n">' + esc(p.name) + '</div>' +
+          '<div class="d">' + esc(p.description || 'Sem descrição') + ' · ⏱ ' + fmtDur(totalDur) + ' total</div></div>' +
+        '<button class="btn ghost sm" onclick="openPlaylistEditor(\'' + p._id + '\')">✏️ Editar</button>' +
+        '<button class="btn danger sm" onclick="deletePlaylist(\'' + p._id + '\', this)">🗑</button>' +
+      '</div>' +
+      (p.items && p.items.length ? '<div class="pl-items">' + p.items.map((it, i) =>
+        '<div class="pl-item"><span class="ord">' + (i+1) + '</span>' + typeBadge(it.type) +
+        '<span class="nm">' + esc(it.name) + '</span><span class="dur">' + fmtDur(it.durationSeconds) + '</span></div>'
+      ).join('') + '</div>' : '') +
+    '</div>';
+  }).join('');
+}
+function deletePlaylist(id, btn) {
+  if (!confirm('Excluir esta playlist?')) return;
+  btn.disabled = true;
+  api('/api/playlists/' + id, { method:'DELETE' })
+    .then(() => { toast('Playlist excluída', 'ok'); return atualizarDados(); })
+    .catch((e) => toast('Erro: ' + e.message, 'err'));
+}
+function openPlaylistEditor(id) {
+  const existing = id ? state.playlists.find((p) => p._id === id) : null;
+  state.editingPlaylist = existing ? existing._id : null;
+  state.editingPlaylistItems = existing ? (existing.items || []).map((i) => ({ contentId:i.contentId, durationSeconds:i.durationSeconds })) : [];
+  $('playlistEditorName').value = existing ? existing.name : '';
+  $('playlistEditorDesc').value = existing ? (existing.description || '') : '';
+  renderPlaylistEditorItems();
+  openModal(
+    '<div class="modal-head"><h3>' + (existing ? '✏️ Editar playlist' : '➕ Nova playlist') + '</h3><button class="modal-x" onclick="closeModal()">✕</button></div>' +
+    '<div class="modal-body">' +
+      '<div class="field"><label>Nome da playlist <span class="req">*</span></label><input class="input" id="playlistEditorName" placeholder="Ex: Menu do dia"></div>' +
+      '<div class="field"><label>Descrição</label><input class="input" id="playlistEditorDesc" placeholder="Opcional"></div>' +
+      '<div class="card-head" style="margin-bottom:6px"><h3>🎬 Itens</h3>' +
+        '<div class="right"><select class="select" id="plAddContent" style="min-width:190px"></select>' +
+        '<input class="input" id="plAddDur" type="number" min="0" step="1" placeholder="Duração (s)" style="width:110px">' +
+        '<button class="btn sm" onclick="plEditorAdd()">➕</button></div></div>' +
+      '<div id="plEditorItems"></div>' +
+    '</div>' +
+    '<div class="modal-foot"><button class="btn ghost" onclick="closeModal()">Cancelar</button>' +
+      '<button class="btn" onclick="savePlaylist()">💾 Salvar playlist</button></div>',
+    true
+  );
+  fillPlaylistContentSelect();
+}
+function fillPlaylistContentSelect() {
+  const sel = $('plAddContent');
+  if (!sel) return;
+  sel.innerHTML = state.contents.map((c) => '<option value="' + c._id + '">' + esc(c.name) + ' (' + (c.type || '') + ')</option>').join('');
+}
+function plEditorAdd() {
+  const sel = $('plAddContent');
+  const durInput = $('plAddDur');
+  const content = state.contents.find((c) => c._id === sel.value);
+  if (!content) { toast('Selecione um conteúdo', 'warn'); return; }
+  const durationSeconds = durInput.value ? parseInt(durInput.value, 10) : (content.durationSeconds || 0);
+  state.editingPlaylistItems.push({ contentId: content._id, durationSeconds });
+  renderPlaylistEditorItems();
+}
+function renderPlaylistEditorItems() {
+  const box = $('plEditorItems');
+  if (!box) return;
+  if (!state.editingPlaylistItems.length) {
+    box.innerHTML = '<div class="empty" style="padding:20px"><div class="e-s">Nenhum item adicionado ainda. Use o botão ➕ acima.</div></div>';
+    return;
+  }
+  box.innerHTML = '<div class="pl-items">' + state.editingPlaylistItems.map((it, i) => {
+    const c = state.contents.find((x) => x._id === it.contentId) || { name:'(conteúdo removido)', type:'—' };
+    return '<div class="pl-item"><span class="ord">' + (i+1) + '</span>' + typeBadge(c.type) +
+      '<span class="nm">' + esc(c.name) + '</span>' +
+      '<input class="input" type="number" min="0" style="width:86px;padding:4px 8px;font-size:12.5px" value="' + (it.durationSeconds || 0) + '" title="Duração em segundos" onchange="plEditorDur(' + i + ', this.value)">' +
+      '<button class="btn ghost xs" onclick="plEditorMove(' + i + ',-1)" ' + (i===0?'disabled':'') + '>↑</button>' +
+      '<button class="btn ghost xs" onclick="plEditorMove(' + i + ',1)" ' + (i===state.editingPlaylistItems.length-1?'disabled':'') + '>↓</button>' +
+      '<button class="btn danger xs" onclick="plEditorRemove(' + i + ')">✕</button>' +
+    '</div>';
+  }).join('') + '</div>';
+}
+function plEditorDur(idx, v) { state.editingPlaylistItems[idx].durationSeconds = parseInt(v, 10) || 0; }
+function plEditorMove(idx, dir) {
+  const arr = state.editingPlaylistItems;
+  const j = idx + dir;
+  if (j < 0 || j >= arr.length) return;
+  [arr[idx], arr[j]] = [arr[j], arr[idx]];
+  renderPlaylistEditorItems();
+}
+function plEditorRemove(idx) { state.editingPlaylistItems.splice(idx, 1); renderPlaylistEditorItems(); }
+function savePlaylist() {
+  const name = $('playlistEditorName').value.trim();
+  if (!name) { toast('Informe um nome para a playlist', 'warn'); return; }
+  if (!state.editingPlaylistItems.length) { toast('Adicione ao menos um item de conteúdo', 'warn'); return; }
+  const body = { name, description: $('playlistEditorDesc').value.trim(), items: state.editingPlaylistItems.map((i) => ({ contentId:i.contentId, durationSeconds:i.durationSeconds })) };
+  if (state.editingPlaylist) {
+    const patch = { name, items: body.items };
+    if (body.description !== undefined) patch.description = body.description;
+    api('/api/playlists/' + state.editingPlaylist, { method:'PATCH', body: patch })
+      .then(() => { toast('Playlist atualizada', 'ok'); closeModal(); return atualizarDados(); })
+      .catch((e) => toast('Erro: ' + e.message, 'err'));
+  } else {
+    api('/api/playlists', { method:'POST', body })
+      .then(() => { toast('Playlist criada com sucesso', 'ok'); closeModal(); return atualizarDados(); })
+      .catch((e) => toast('Erro: ' + e.message, 'err'));
+  }
+}
+
+/* ---------- Schedules ---------- */
+function renderSchedules() {
+  const container = $('schedulesContainer');
+  const list = state.schedules;
+  if (!list.length) {
+    container.innerHTML = '<div class="card flat"><div class="empty"><div class="e-ico">⏰</div><div class="e-t">Nenhum agendamento</div><div class="e-s">Programe playlists para tocar em dias e horários específicos.</div></div></div>';
+    return;
+  }
+  container.innerHTML = list.map((s) => {
+    const pl = state.playlists.find((p) => p._id === s.playlistId) ||
+              (typeof s.playlistId === 'object' && s.playlistId.name ? { name: s.playlistId.name } : { name: 'Playlist' });
+    const days = (s.rules && s.rules.daysOfWeek && s.rules.daysOfWeek.length)
+      ? s.rules.daysOfWeek.map((d) => dayNames[d]).join(', ') : 'Todos os dias';
+    const nDevs = (s.deviceIds || []).length;
+    const inHours = { startTime: '00:00', endTime: '23:59', ...(s.rules || {}) };
+    return '<div class="sched-card">' +
+      '<div class="sched-head">' +
+        '<div class="sched-ico">' + (s.priority >= 7 ? '🔥' : (s.priority >= 4 ? '⚡' : '🕐')) + '</div>' +
+        '<div class="sched-main"><div class="n">' + esc(s.name) + ' <span style="font-size:11px;color:var(--muted2);font-weight:400">· ' + esc(pl.name) + '</span></div>' +
+          '<div class="info">' +
+            '<span>📅 ' + days + '</span>' +
+            '<span>🕘 ' + inHours.startTime + ' → ' + inHours.endTime + '</span>' +
+            '<span>🖥️ ' + nDevs + (nDevs === 1 ? ' dispositivo' : ' dispositivos') + '</span>' +
+            '<span>🏷️ prioridade ' + (s.priority || 1) + '</span>' +
+            (s.rules && s.rules.startDate ? '<span>▶ desde ' + fmtDateShort(s.rules.startDate) + '</span>' : '') +
+            (s.rules && s.rules.endDate ? '<span>⏹ até ' + fmtDateShort(s.rules.endDate) + '</span>' : '') +
+          '</div></div>' +
+        '<label class="switch" title="Ativar / desativar"><input type="checkbox" ' + (s.active === false ? '' : 'checked') + ' onchange="toggleSchedule(\'' + s._id + '\', this.checked)"><span class="sl"></span></label>' +
+        '<button class="btn ghost sm" onclick="openScheduleModal(\'' + s._id + '\')">✏️</button>' +
+        '<button class="btn danger sm" onclick="deleteSchedule(\'' + s._id + '\', this)">🗑</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+function toggleSchedule(id, on) {
+  api('/api/schedules/' + id, { method:'PATCH', body:{ active: on } })
+    .then(() => { toast(on ? 'Agendamento ativado' : 'Agendamento desativado', 'ok'); })
+    .catch((e) => { toast('Erro: ' + e.message, 'err'); renderSchedules(); });
+}
+function deleteSchedule(id, btn) {
+  if (!confirm('Excluir este agendamento?')) return;
+  btn.disabled = true;
+  api('/api/schedules/' + id, { method:'DELETE' })
+    .then(() => { toast('Agendamento excluído', 'ok'); return atualizarDados(); })
+    .catch((e) => toast('Erro: ' + e.message, 'err'));
+}
+function openScheduleModal(id) {
+  const existing = id ? state.schedules.find((s) => s._id === id) : null;
+  const draft = existing ? {
+    name: existing.name,
+    playlistId: existing.playlistId && typeof existing.playlistId === 'object' ? existing.playlistId._id : existing.playlistId,
+    deviceIds: (existing.deviceIds || []).map(String),
+    rules: { ...existing.rules },
+    priority: existing.priority || 1
+  } : { name:'', playlistId:'', deviceIds:[], rules:{}, priority:1 };
+  draft.origId = existing ? existing._id : null;
+  state.scheduleDraft = draft;
+  renderScheduleModalInner();
+}
+function renderScheduleModalInner() {
+  const d = state.scheduleDraft;
+  const selectedDays = new Set((d.rules.daysOfWeek || []).map(Number));
+  const devOpts = state.devices.length
+    ? state.devices.map((dev) => '<label class="chip' + (d.deviceIds.includes(String(dev._id)) ? ' active' : '') + '"><input type="checkbox" value="' + dev._id + '" ' + (d.deviceIds.includes(String(dev._id)) ? 'checked' : '') + '>' + esc(dev.name) + (dev.location ? ' <small style="opacity:.7">(' + esc(dev.location) + ')</small>' : '') + '</label>').join('')
+    : '<div style="color:var(--muted2);font-size:12.5px">Nenhum dispositivo pareado ainda.</div>';
+  const plOpts = '<option value="">Selecione…</option>' + state.playlists.map((p) => '<option value="' + p._id + '" ' + (d.playlistId === p._id ? 'selected' : '') + '>' + esc(p.name) + '</option>').join('');
+  const chips = dayIndex.map((i) => '<label class="chip' + (selectedDays.has(i) ? ' active' : '') + '">' +
+    '<input type="checkbox" value="' + i + '" ' + (selectedDays.has(i) ? 'checked' : '') + '>' + dayNames[i] + '</label>').join('');
+
+  openModal(
+    '<div class="modal-head"><h3>' + (state.scheduleDraft.origId ? '✏️ Editar agendamento' : '➕ Novo agendamento') + '</h3><button class="modal-x" onclick="closeModal()">✕</button></div>' +
+    '<div class="modal-body">' +
+      '<div class="field"><label>Nome <span class="req">*</span></label><input class="input" id="schName" value="' + esc(d.name) + '" placeholder="Ex: Cardápio da manhã"></div>' +
+      '<div class="field"><label>Playlist <span class="req">*</span></label><select class="select" id="schPlaylist">' + plOpts + '</select></div>' +
+      '<div class="field"><label>Dispositivos</label><div class="chip-group" id="schDevices">' + devOpts + '</div></div>' +
+      '<div class="field"><label>Dias da semana</label><div class="chip-group" id="schDays">' + chips + '</div></div>' +
+      '<div class="form-row">' +
+        '<div class="field"><label>Início</label><input class="input" type="time" id="schStart" value="' + esc(d.rules.startTime || '00:00') + '"></div>' +
+        '<div class="field"><label>Fim</label><input class="input" type="time" id="schEnd" value="' + esc(d.rules.endTime || '23:59') + '"></div>' +
+      '</div>' +
+      '<div class="form-row">' +
+        '<div class="field"><label>Prioridade (1 a 10)</label><input class="input" type="number" min="1" max="10" id="schPriority" value="' + (d.priority || 1) + '"></div>' +
+        '<div class="field"><label>Data início (opcional)</label><input class="input" type="date" id="schStartDate" value="' + esc(d.rules.startDate || '') + '"></div>' +
+        '<div class="field"><label>Data fim (opcional)</label><input class="input" type="date" id="schEndDate" value="' + esc(d.rules.endDate || '') + '"></div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="modal-foot"><button class="btn ghost" onclick="closeModal()">Cancelar</button>' +
+      '<button class="btn" onclick="saveSchedule()">💾 Salvar agendamento</button></div>',
+    true
+  );
+  $('schDays').addEventListener('click', (e) => {
+    if (e.target.tagName === 'LABEL') e.target.classList.toggle('active');
+  });
+  $('schDevices').addEventListener('click', (e) => {
+    if (e.target.tagName === 'LABEL') e.target.classList.toggle('active');
+  });
+}
+function saveSchedule() {
+  const d = state.scheduleDraft;
+  const name = $('schName').value.trim();
+  const playlistId = $('schPlaylist').value;
+  if (!name) { toast('Informe o nome do agendamento', 'warn'); return; }
+  if (!playlistId) { toast('Selecione uma playlist', 'warn'); return; }
+  const deviceIds = Array.from(document.querySelectorAll('#schDevices input:checked')).map((c) => c.value);
+  const daysOfWeek = Array.from(document.querySelectorAll('#schDays input:checked')).map((c) => parseInt(c.value, 10));
+  const placeholder = Array.from(document.querySelectorAll('#schDays input')).map((c) => parseInt(c.value, 10));
+  const rules = {
+    daysOfWeek: daysOfWeek.length ? daysOfWeek : placeholder,
+    startTime: $('schStart').value || '00:00',
+    endTime: $('schEnd').value || '23:59',
+    startDate: $('schStartDate').value || undefined,
+    endDate: $('schEndDate').value || undefined
+  };
+  const priority = Math.min(10, Math.max(1, parseInt($('schPriority').value, 10) || 1));
+  const body = { name, playlistId, deviceIds, rules, priority };
+  if (d.origId) {
+    api('/api/schedules/' + d.origId, { method:'PATCH', body })
+      .then(() => { toast('Agendamento atualizado', 'ok'); closeModal(); return atualizarDados(); })
+      .catch((e) => toast('Erro: ' + e.message, 'err'));
+  } else {
+    api('/api/schedules', { method:'POST', body })
+      .then(() => { toast('Agendamento criado', 'ok'); closeModal(); return atualizarDados(); })
+      .catch((e) => toast('Erro: ' + e.message, 'err'));
+  }
+}
+
+/* ---------- Reports ---------- */
+function fillReportDeviceSelect() {
+  const sel = $('repDevice');
+  const prev = sel.value;
+  sel.innerHTML = '<option value="">Todos os dispositivos</option>' +
+    state.devices.map((d) => '<option value="' + d._id + '" ' + (prev === d._id ? 'selected' : '') + '>' + esc(d.name) + '</option>').join('');
+  sel.value = prev;
+}
+function getReportRange() {
+  const fromVal = $('repFrom').value;
+  const toVal = $('repTo').value;
+  let from, to;
+  if (fromVal) from = new Date(fromVal).toISOString();
+  if (toVal) { const t = new Date(toVal); t.setSeconds(59); to = t.toISOString(); }
+  if (!from && !to) {
+    to = new Date().toISOString();
+    const f = new Date(); f.setDate(f.getDate() - 7); from = f.toISOString();
+  }
+  return { from, to };
+}
+async function loadReports(opts) {
+  opts = opts || {};
+  const { from, to } = getReportRange();
+  const deviceId = $('repDevice').value;
+  $('repTable').innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted2);padding:22px">Carregando…</td></tr>';
+  try {
+    const logs = await loadLogs({ deviceId, from, to });
+    state.logs = logs;
+    $('repCount').textContent = logs.length;
+    renderReportTable(logs);
+    renderReportSummary(logs);
+  } catch (e) {
+    $('repTable').innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--error);padding:22px">Erro ao carregar: ' + esc(e.message) + '</td></tr>';
+    $('repSummary').innerHTML = '<div class="empty" style="padding:20px"><div class="e-s">Sem dados para exibir.</div></div>';
+  }
+}
+function renderReportTable(logs) {
+  const devNames = {};
+  state.devices.forEach((d) => devNames[d._id] = d.name);
+  if (!logs.length) {
+    $('repTable').innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted2);padding:22px">Nenhuma reprodução encontrada no período.</td></tr>';
+    return;
+  }
+  $('repTable').innerHTML = logs.map((l) =>
+    '<tr><td>' + esc(l.contentName) + '</td>' +
+    '<td>' + typeBadge(l.type) + '</td>' +
+    '<td>' + esc(devNames[l.deviceId] || '—') + '</td>' +
+    '<td>' + fmtDate(l.startedAt) + '</td>' +
+    '<td>' + fmtDate(l.endedAt) + '</td>' +
+    '<td>' + fmtDur(l.durationSeconds) + '</td></tr>'
+  ).join('');
+}
+function renderReportSummary(logs) {
+  const byContent = {};
+  logs.forEach((l) => {
+    const k = l.contentName || 'Sem nome';
+    if (!byContent[k]) byContent[k] = { count: 0, seconds: 0, type: l.type };
+    byContent[k].count++;
+    byContent[k].seconds += (l.durationSeconds || 0);
+  });
+  const entries = Object.entries(byContent).sort((a, b) => b[1].count - a[1].count);
+  if (!entries.length) {
+    $('repSummary').innerHTML = '<div class="empty" style="padding:20px"><div class="e-s">Sem reproduções no período.</div></div>';
+    return;
+  }
+  const max = entries[0][1].count;
+  $('repSummary').innerHTML = '<div class="list">' + entries.map(([name, v]) =>
+    '<div class="row-item">' +
+      '<div class="ri-main"><div class="ri-title">' + esc(name) + '</div>' +
+        '<div class="ri-sub"><span>Total: <b class="count-tag">' + v.count + '</b> exibições</span><span>⏱ ' + fmtDur(v.seconds) + '</span></div>' +
+        '<div class="mini-bar" style="margin-top:6px"><i style="width:' + Math.max(4, Math.round(v.count/max*100)) + '%"></i></div>' +
+      '</div>' +
+    '</div>'
+  ).join('') + '</div>';
+}
+
+/* ---------- Plans modal ---------- */
+function openPlansModal() {
+  api('/api/auth/upgrade', {  }).then((res) => {
+    const plans = res.plans || [];
+    const current = state.user && state.user.plan;
+    openModal(
+      '<div class="modal-head"><h3>⭐ Planos do IndoorMedia</h3><button class="modal-x" onclick="closeModal()">✕</button></div>' +
+      '<div class="modal-body">' +
+        '<div class="grid c2" style="grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px">' +
+          plans.map((p) => {
+            const price = p.priceMonthly !== undefined ? 'R$ ' + p.priceMonthly.toFixed(2).replace('.', ',') : (p.price === 0 ? 'Grátis' : 'R$ ' + (p.price || 0));
+            const isCurrent = current === p.name;
+            return '<div style="background:var(--card2);border:2px solid ' + (isCurrent ? 'var(--primary)' : 'var(--border)') + ';border-radius:14px;padding:18px;position:relative">' +
+              (isCurrent ? '<span class="m-tag tag-blue" style="position:static;display:inline-block;margin-bottom:8px">Seu plano</span>' : '') +
+              '<div style="font-weight:800;font-size:17px;text-transform:capitalize">' + esc(p.name) + '</div>' +
+              '<div style="font-size:12px;color:var(--muted2)">' + p.screens + (p.screens === 1 ? ' tela' : ' telas') + '</div>' +
+              '<div style="font-size:22px;font-weight:800;margin:10px 0 2px;color:var(--primary)">' + price + '</div>' +
+              '<div style="font-size:11.5px;color:var(--muted2);margin-bottom:12px">' + (p.priceMonthly ? 'por mês' : 'para começar') + '</div>' +
+              '<div style="font-size:12.5px;color:var(--muted);margin-bottom:14px">✓ até ' + p.screens + ' telas<br>✓ conteúdo ilimitado<br>✓ agendamentos e relatórios</div>' +
+              (isCurrent ? '' :
+                '<a href="https://wa.me/5511999999999?text=' + encodeURIComponent('Quero contratar o plano ' + p.name + ' do IndoorMedia') + '" target="_blank" class="btn block sm" style="background:rgba(74,222,128,.15);color:#4ade80;border:1px solid rgba(74,222,128,.35)">💬 Contratar via WhatsApp</a>')
+            + '</div>';
+          }).join('') +
+        '</div>' +
+        '<div style="margin-top:14px;font-size:12px;color:var(--muted2);text-align:center">Pagamento processado via gateway. O plano é liberado após confirmação. <a href="#" onclick="this.href=\'mailto:vendas@indoor.media?subject=Upgrade de plano\'">Fale com vendas</a>.</div>' +
+      '</div>',
+      true
+    );
+  }).catch((e) => toast('Erro ao buscar planos: ' + e.message, 'err'));
+}
+
+/* ---------- Init ---------- */
+(function init() {
+  if (state.token && state.user) {
+    $('authScreen').style.display = 'none';
+    $('appScreen').style.display = 'flex';
+    renderUser();
+    go('dashboard');
+    atualizarDados();
+    startPolling();
+  }
+  $('repFrom').value = '';
+  $('repTo').value = '';
+})();
+</script>
+</body>
+</html>

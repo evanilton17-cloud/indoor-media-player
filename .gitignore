@@ -1,0 +1,24 @@
+# Android / Gradle
+.gradle/
+build/
+app/build/
+local.properties
+captures/
+.externalNativeBuild/
+.cxx/
+*.iml
+.idea/
+.DS_Store
+
+# Node backend
+backend/node_modules/
+backend/.env
+npm-debug.log*
+
+# Logs
+*.log
+server*.log
+
+# APKs (gerar build em vez de commitar)
+*.apk
+*.aab

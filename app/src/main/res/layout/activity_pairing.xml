@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#1a1a2e"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:padding="48dp">
+
+    <TextView
+        android:id="@+id/tvTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Indoor Media Player"
+        android:textColor="#e94560"
+        android:textSize="32sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="12dp" />
+
+    <TextView
+        android:id="@+id/tvSubtitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Apareie seu dispositivo"
+        android:textColor="#aaaacc"
+        android:textSize="18sp"
+        android:layout_marginBottom="48dp" />
+
+    <TextView
+        android:id="@+id/tvStatus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Conectando ao servidor..."
+        android:textColor="#888899"
+        android:textSize="16sp"
+        android:layout_marginBottom="24dp" />
+
+    <TextView
+        android:id="@+id/tvPin"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="------"
+        android:textColor="#ffffff"
+        android:textSize="96sp"
+        android:textStyle="bold"
+        android:letterSpacing="0.3"
+        android:background="#2d2d44"
+        android:padding="24dp"
+        android:layout_marginBottom="24dp" />
+
+    <TextView
+        android:id="@+id/tvInstruction"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Digite este código no painel de controle web"
+        android:textColor="#888899"
+        android:textSize="14sp"
+        android:layout_marginBottom="48dp" />
+
+    <TextView
+        android:id="@+id/tvConnectionStatus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textColor="#53d769"
+        android:textSize="14sp"
+        android:layout_marginBottom="24dp"
+        android:visibility="gone" />
+
+    <Button
+        android:id="@+id/btnRefresh"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="JA PAREEI"
+        android:textColor="#ffffff"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:backgroundTint="#e94560"
+        android:paddingHorizontal="48dp"
+        android:paddingVertical="16dp" />
+
+</LinearLayout>
